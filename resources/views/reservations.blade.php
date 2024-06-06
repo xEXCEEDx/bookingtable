@@ -55,6 +55,7 @@
                             <tr>
                                 <th scope="col">Table Number</th>
                                 <th scope="col">User Name</th>
+                                <th scope="col">Confirm Time</th>
                                 <th scope="col">Reservation Time</th>
                                 <th scope="col">Status</th>
                                 <th scope="col">Actions</th>
@@ -66,6 +67,8 @@
                                     <td>{{ $reservation->table->table_number }}</td>
                                     <td>{{ $reservation->name }}</td>
                                     <td>{{ $reservation->reservation_time }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($reservation->reservation_date)->format('d M Y') }}</td>
+
                                     <td>
                                         <span class="badge {{ $reservation->status == 'reserved' ? 'bg-primary' : 'bg-success' }}">
                                             {{ ucfirst($reservation->status) }}

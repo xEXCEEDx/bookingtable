@@ -219,12 +219,28 @@
 <body>
     <div class="booking-container">
         <nav>
-            <a class="nav-link" href="#"><i class="fas fa-chevron-left"></i></a>
-            <a href='{{ route('userreservations') }}'>
-            <img src="https://img.icons8.com/?size=100&id=68456&format=png&color=FFFFFF"  class="imgnav" alt="">
-        </a>
-        </nav>
+            <a class="nav-link" href="{{ route('booking_dates') }}"><i class="fas fa-chevron-left"></i></a>
+            @if(session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
+        @endif
 
+        @if(session('warning'))
+            <div class="alert alert-warning">
+                {{ session('warning') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="alert alert-danger">
+                {{ session('error') }}
+            </div>
+        @endif
+            <a href="{{ route('userreservations') }}">
+                <img src="https://img.icons8.com/?size=100&id=68456&format=png&color=FFFFFF" class="imgnav" alt="">
+            </a>
+        </nav>
 
         <div>
             <img src="https://uppic.cloud/ib/iqbCuu6eGJ.png" alt="Image">
@@ -242,16 +258,14 @@
                 </div>
             </div>
             <div class="seat-box">
-                <!-- Dynamic content for seats -->
                 @foreach ($tables as $table)
-                    <div class="seat {{ $table->status }}" data-id="{{ $table->table_number }}">
+                    <div class="seat {{ $table->status }}" data-id="{{ $table->id }}">
                         <div class="seat-number">{{ $table->table_number }}</div>
                     </div>
                 @endforeach
             </div>
         </div>
 
-        <!-- Booking details section -->
         <div class="booking-details" id="booking-details">
             <div class="details-row">
                 <span>โต๊ะที่เลือก:</span><span id="tickets-reserved">-</span>
@@ -261,18 +275,17 @@
             </div>
             <form method="POST" action="{{ route('booking.confirm') }}" id="reservation-form">
                 @csrf
+                <input type="hidden" name="date" value="{{ $selectedDate }}">
+                <input type="hidden" name="reservation_time" id="reservation_time">
                 <div class="mb-3">
-                    <!-- Hidden select element for selected tables -->
                     <select multiple class="hidden" id="tables" name="tables[]"></select>
                 </div>
-                <!-- Submit button to confirm reservation -->
                 <button type="submit" class="continue">ยืนยันการจอง</button>
             </form>
         </div>
     </div>
 
     <!-- Reservation form -->
-
 
     <script>
         const seatBox = document.querySelector('.seat-box');
@@ -321,7 +334,6 @@
                 reservationTablesSelect.appendChild(option);
             });
         }
-
         seatBox.addEventListener('click', toggleSeat);
         reservationForm.addEventListener('submit', function(event) {
             event.preventDefault();
@@ -332,5 +344,4 @@
         updateDetails(); // Initial update on page load
     </script>
 </body>
-
 </html>

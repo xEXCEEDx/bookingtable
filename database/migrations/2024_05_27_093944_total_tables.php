@@ -14,6 +14,9 @@ return new class extends Migration
         Schema::table('tables', function (Blueprint $table) {
             $table->integer('total_tables')->nullable()->after('status');
         });
+
+        // Populate initial table numbers with total_tables
+        $this->populateTableNumbers();
     }
 
     /**
@@ -24,5 +27,15 @@ return new class extends Migration
         Schema::table('tables', function (Blueprint $table) {
             $table->dropColumn('total_tables');
         });
+    }
+
+    protected function populateTableNumbers()
+    {
+        // Assuming you want to create a certain number of tables
+        $numberOfTables = 10; // Change this number to how many tables you want to create initially
+
+        for ($i = 1; $i <= $numberOfTables; $i++) {
+            \App\Models\Table::create(['table_number' => $i, 'status' => 'available', 'total_tables' => $numberOfTables]);
+        }
     }
 };

@@ -127,7 +127,7 @@ class ReservationController extends Controller
                                     ->get();
 
         // Group reservations by reservation_time
-        $groupedReservations = $reservations->groupBy('reservation_time');
+        $groupedReservations = $reservations->groupBy('reservation_date');
 
         return view('userreservations', compact('groupedReservations'));
     }

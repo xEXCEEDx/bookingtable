@@ -34,6 +34,7 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            height: 700px;
             box-shadow: 0 0 10px 2px #212121;
             background: #2f2f2f;
         }
@@ -104,7 +105,7 @@
 <body>
     <div class="booking-container">
         <nav>
-            <a class="nav-link" href="{{ route('booking') }}"><i class="fas fa-chevron-left"></i></a>
+            <a class="nav-link" href="{{ route('booking_dates') }}"><i class="fas fa-chevron-left"></i></a>
             <h5>รายการที่จอง</h5>
         </nav>
         <main>
@@ -113,7 +114,7 @@
                     No reservations yet.
                 </div>
             @else
-                @foreach ($groupedReservations as $reservationTime => $reservations)
+                @foreach ($groupedReservations as $reservationDate => $reservations)
                     @php
                         $tableNumbers = $reservations->pluck('table.table_number')->implode(', ');
                     @endphp
@@ -123,7 +124,7 @@
                             <span class="reservation-number">โต๊ะ {{ $tableNumbers }}</span>
                             <div class="date">
                                 <img src="https://cdn-icons-png.flaticon.com/128/7691/7691413.png">
-                                <span class="reservation-date">{{ $reservationTime }}</span>
+                                <span class="reservation-date">{{ \Carbon\Carbon::parse($reservationDate)->format('d M Y') }}</span>
                             </div>
                         </div>
                     </section>

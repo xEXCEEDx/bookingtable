@@ -37,6 +37,20 @@ Route::delete('reservations/{reservation}/update-table', [ReservationController:
 Route::get('/reservations/search', [ReservationController::class, 'search'])->name('reservations.search');
 Route::get('/userreservations', [ReservationController::class, 'userreservations'])->name('userreservations');
 
+Route::get('/datebooking', [BookingController::class, 'showDates'])->name('booking_dates');
+Route::get('/reservations', [BookingController::class, 'reservations'])->name('reservations');
+
+
+Route::get('/date', function () {
+    return view('date-selection');
+})->name('date.selection');
+Route::post('/reservations', [ReservationController::class, 'create'])->name('reservations.store');
+Route::post('/tables/updateStatusForDate', [TableController::class, 'updateStatusForDate'])->name('tables.updateStatusForDate');
+Route::post('/tables/reserve', [TableController::class, 'reserveTable'])->name('tables.reserve');
+
+Route::get('/tables/manage/{date?}', [TableController::class, 'manageTables'])->name('tables.manage');
+
+
 });
 
 
