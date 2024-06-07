@@ -34,7 +34,7 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            height: 700px;
+            height: 43rem;
             box-shadow: 0 0 10px 2px #212121;
             background: #2f2f2f;
         }
@@ -125,6 +125,7 @@
                             <div class="date">
                                 <img src="https://cdn-icons-png.flaticon.com/128/7691/7691413.png">
                                 <span class="reservation-date">{{ \Carbon\Carbon::parse($reservationDate)->format('d M Y') }}</span>
+
                             </div>
                         </div>
                     </section>

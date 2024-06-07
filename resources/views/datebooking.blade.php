@@ -23,7 +23,6 @@
             position: absolute;
             z-index: 1000;
             display: flex;
-            /* Centered at bottom with some margin */
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
@@ -192,11 +191,12 @@
     </style>
 </head>
 
-<body> <div class="icon-container">
-            <a href="{{ route('userreservations') }}">
-                <img src="https://img.icons8.com/?size=100&id=68456&format=png&color=FFFFFF" class="imgnav" alt="">
-            </a>
-        </div>
+<body>
+    <div class="icon-container">
+        <a href="{{ route('userreservations') }}">
+            <img src="https://img.icons8.com/?size=100&id=68456&format=png&color=FFFFFF" class="imgnav" alt="">
+        </a>
+    </div>
     <div class="booking-container">
         <div id="logo-container">
             <img src="https://img5.pic.in.th/file/secure-sv1/EX-removebg-preview.png" alt="Logo">
@@ -204,7 +204,6 @@
         <h1 class="mb-4">EXCEED BAR</h1>
 
         <!-- Icon link -->
-
 
         <button type="button" class="btn btn-primary" tabindex="0" onclick="openCalendar()">เลือกวันจองโต๊ะ</button>
         <div id="flatpickr-calendar" class="flatpickr-calendar"></div>
@@ -218,16 +217,29 @@
         // Function to open Flatpickr calendar
         function openCalendar() {
             const today = new Date();
-            const tomorrow = new Date();
+            const tomorrow = new Date(today);
+            const dayAfterTomorrow = new Date(today);
+
             tomorrow.setDate(today.getDate() + 1);
-            const allowedDates = [today.toISOString().split('T')[0], tomorrow.toISOString().split('T')[0]];
+            dayAfterTomorrow.setDate(today.getDate() + 1);
+
+            const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1);
+
+            const pastDays = [];
+            for (let d = firstDayOfMonth; d < today; d.setDate(d.getDate() + 1)) {
+                pastDays.push(new Date(d));
+            }
 
             var calendar = flatpickr('#flatpickr-calendar', {
                 inline: true,
                 dateFormat: 'Y-m-d',
-                minDate: 'today', // Set minimum date to today
+                minDate: firstDayOfMonth,
+                maxDate: lastDayOfMonth,
+                disable: pastDays,
                 onChange: function (selectedDates, dateStr, instance) {
                     const selectedDate = selectedDates[0].toISOString().split('T')[0];
+                    const allowedDates = [today.toISOString().split('T')[0], tomorrow.toISOString().split('T')[0], dayAfterTomorrow.toISOString().split('T')[0]];
                     if (!allowedDates.includes(selectedDate)) {
                         alert('วันที่คุณเลือกยังไม่เปิดทำการให้จอง');
                     } else {
@@ -249,6 +261,7 @@
             }
 
             document.getElementById('flatpickr-calendar').style.display = 'block';
+
         }
     </script>
 

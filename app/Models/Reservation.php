@@ -27,4 +27,9 @@ class Reservation extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function tableStatus()
+    {
+        return $this->hasOne(TableStatus::class, 'table_id', 'table_id')->where('date', $this->reservation_date);
+    }
 }

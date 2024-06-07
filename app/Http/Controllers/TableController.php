@@ -1,23 +1,82 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Table;
-use App\Models\Reservation;
-use Auth;
+use App\Models\TableStatus;
 use Carbon\Carbon;
+use App\Models\Reservation;
+use App\Http\Controllers\Auth;
 
 class TableController extends Controller
 {
     public function index()
     {
+        // Fetch all tables with their statuses
         $tables = Table::all();
+
         return view('tablestaff', compact('tables'));
     }
 
-    public function setTotalTables(Request $request)
+    public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:available,reserved',
+            'date' => 'required|date',
+        ]);
+
+        $status = $request->input('status');
+        $date = $request->input('date');
+
+        // Update the table status
+        $tableStatus = TableStatus::updateOrCreate(
+            ['table_id' => $id, 'date' => $date],
+            ['status' => $status]
+        );
+
+        // If the status is 'reserved', create a reservation
+        if ($status === 'reserved') {
+            $reservation = Reservation::firstOrCreate(
+                ['table_id' => $id, 'reservation_date' => $date],
+                [
+                    'status' => 'reserved',
+                    'name' => 'Auto Reserved', // ปรับแต่งชื่อตามที่ต้องการ
+                    'user_id' => Auth::id() // ระบุ user_id ของผู้ใช้ปัจจุบัน
+                ]
+            );
+        } else {
+            // If the status is 'available', delete any existing reservation for that date
+            Reservation::where('table_id', $id)->where('reservation_date', $date)->delete();
+        }
+
+        return back()->with('success', 'Table status updated successfully.');
+    }
+
+
+    public function reserveTable(Request $request)
+    {
+        $request->validate([
+            'reservation_date' => 'required|date|after_or_equal:tomorrow|before_or_equal:' . Carbon::tomorrow()->addDays(2)->format('Y-m-d'),
+            'table_id' => 'required|exists:tables,id'
+        ]);
+
+        $tableId = $request->input('table_id');
+        if (is_null($tableId)) {
+            return redirect()->back()->with('error', 'Table ID is required.');
+        }
+
+        $date = Carbon::parse($request->input('reservation_date'));
+
+        $tableStatus = TableStatus::updateOrCreate(
+            ['table_id' => $tableId, 'date' => $date],
+            ['status' => 'reserved']
+        );
+
+        return redirect()->back()->with('success', 'Table reserved successfully.');
+    }
+
+    public function setTotal(Request $request)
     {
         $request->validate([
             'total_tables' => 'required|integer|min:0',
@@ -36,118 +95,5 @@ class TableController extends Controller
         }
 
         return redirect()->route('tables.index')->with('success', 'Total tables updated successfully.');
-    }
-
-    public function updateStatus(Request $request, $tableId)
-    {
-        $request->validate([
-            'status' => 'required|in:available,reserved',
-        ]);
-
-        $table = Table::findOrFail($tableId);
-
-        // ตรวจสอบว่าโต๊ะถูกจองไว้หรือไม่
-        if ($request->status == 'reserved') {
-            $user = Auth::user();
-
-            // กำหนดจำนวนการจองสูงสุดต่อวัน
-            $maxReservationsPerDay = 1;
-
-            // นับจำนวนการจองในวันนี้
-            $reservationsToday = Reservation::where('user_id', $user->id)
-                ->whereDate('reservation_date', Carbon::today())
-                ->count();
-
-            // ตรวจสอบว่ามีการจองเกินจำนวนที่กำหนดหรือไม่
-            if ($reservationsToday >= $maxReservationsPerDay) {
-                return back()->withErrors('You have reached the maximum reservations per day.');
-            }
-        }
-
-        // อัปเดตสถานะของโต๊ะ
-        $table->status = $request->status;
-        $table->save();
-
-        // อัปเดตการจองที่เกี่ยวข้องกับโต๊ะนี้
-        if ($request->status == 'available') {
-            // ลบการจองทั้งหมดสำหรับโต๊ะนี้
-            Reservation::where('table_id', $tableId)->delete();
-        } elseif ($request->status == 'reserved') {
-            // สร้างการจองใหม่
-            $reservation = new Reservation();
-            $reservation->table_id = $tableId;
-            $reservation->user_id = Auth::id(); // ตั้งค่า user_id จากผู้ใช้ที่เข้าสู่ระบบ
-            $reservation->name = Auth::user()->name; // ตั้งชื่อเป็นชื่อผู้ใช้ที่เข้าสู่ระบบ
-            $reservation->reservation_time = Carbon::now(); // ใช้ Carbon เพื่อเวลาปัจจุบัน
-            $reservation->status = 'reserved';
-            $reservation->save();
-        }
-
-        return redirect()->route('tables.index')->with('success', 'Table status updated successfully.');
-    }
-
-    public function update(Request $request)
-    {
-        $request->validate([
-            'username' => 'required',
-            'table_number' => 'required|integer|exists:tables,table_number',
-        ]);
-
-        $tableNumber = $request->table_number;
-        $status = $request->status;
-
-        // Find the table by table_number
-        $table = Table::where('table_number', $tableNumber)->first();
-
-        if (!$table) {
-            return back()->withErrors('Table not found.');
-        }
-
-        // Update table status
-        $table->status = $status;
-        $table->save();
-
-        // Get current user
-        $user = Auth::user();
-
-        // Find reservation by user_id and table_id with today's date
-        $reservation = Reservation::where('user_id', $user->id)
-            ->where('table_id', $table->id)
-            ->whereDate('reservation_time', Carbon::today())
-            ->first();
-
-        if ($reservation) {
-            // Update reservation status
-            $reservation->status = $status;
-            $reservation->save();
-        }
-
-        return redirect()->route('reservations')->with('success', 'Table status updated successfully.');
-    }
-    public function reserveTable(Request $request)
-    {
-        $request->validate([
-            'reservation_date' => 'required|date|after_or_equal:tomorrow|before_or_equal:'.Carbon::tomorrow()->addDays(2)->format('Y-m-d'),
-        ]);
-
-        // ตรวจสอบและจองโต๊ะตามวันที่ที่เลือก
-        $tableId = $request->input('table_id');
-
-        $table = Table::find($tableId);
-
-        if (!$table) {
-            return redirect()->back()->with('error', 'ไม่พบโต๊ะที่ต้องการจอง');
-        }
-
-        // อัปเดตสถานะของโต๊ะเป็น 'reserved' หรือ 'available' ตามสถานะปัจจุบัน
-        if ($table->status == 'available') {
-            $table->status = 'reserved';
-        } elseif ($table->status == 'reserved') {
-            $table->status = 'available';
-        }
-
-        $table->save();
-
-        return redirect()->back()->with('success', 'อัปเดตสถานะการจองโต๊ะเรียบร้อยแล้ว');
     }
 }

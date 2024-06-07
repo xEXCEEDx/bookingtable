@@ -1,27 +1,31 @@
 <?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up()
     {
-        Schema::table('reservations', function (Blueprint $table) {
-            $table->date('reservation_date')->nullable()->change();
-        });
+        // Check if the 'staff_name' column does not exist before adding it
+        if (!Schema::hasColumn('reservations', 'staff_name')) {
+            Schema::table('reservations', function (Blueprint $table) {
+                $table->date('reservation_date')->nullable()->default(now())->after('status');
+                $table->string('staff_name')->nullable()->after('status');
+            });
+        }
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down()
     {
-        Schema::table('reservations', function (Blueprint $table) {
-            $table->date('reservation_date')->nullable(false)->change();
-        });
+        // Drop the 'staff_name' column if it exists
+        if (Schema::hasColumn('reservations', 'staff_name')) {
+            Schema::table('reservations', function (Blueprint $table) {
+                $table->dropColumn('staff_name');
+                $table->dropColumn('reservation_date');
+            });
+
+        }
     }
 };

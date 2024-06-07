@@ -37,7 +37,7 @@ Route::delete('reservations/{reservation}/update-table', [ReservationController:
 Route::get('/reservations/search', [ReservationController::class, 'search'])->name('reservations.search');
 Route::get('/userreservations', [ReservationController::class, 'userreservations'])->name('userreservations');
 
-Route::get('/datebooking', [BookingController::class, 'showDates'])->name('booking_dates');
+Route::get('/', [BookingController::class, 'showDates'])->name('booking_dates');
 Route::get('/reservations', [BookingController::class, 'reservations'])->name('reservations');
 
 

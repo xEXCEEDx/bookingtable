@@ -52,8 +52,8 @@
                         <x-dropdown-link :href="route('reservations')" class="no-underline">
                             {{ __('Reservations') }}
                         </x-dropdown-link>
-                        <x-dropdown-link :href="route('booking')" class="no-underline">
-                            {{ __('Booking') }}
+                        <x-dropdown-link :href="route('booking_dates')" class="no-underline">
+                            {{ __('Datebooking') }}
                         </x-dropdown-link>
 
                         <!-- Authentication -->
@@ -111,9 +111,9 @@
                 <x-responsive-nav-link :href="route('reservations')" class="no-underline">
                     {{ __('Reservations') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('booking')" class="no-underline">
-                    {{ __('Booking') }}
-                </x-responsive-nav-link>
+                <x-dropdown-link :href="route('booking_dates')" class="no-underline">
+                    {{ __('Datebooking') }}
+                </x-dropdown-link>
 
                 <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">

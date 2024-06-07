@@ -12,28 +12,35 @@ return new class extends Migration
     public function up()
     {
         Schema::create('tables', function (Blueprint $table) {
-            $table->id(); // This will be the auto-increment primary key
-            $table->integer('table_number')->unique(); // Ensure table_number is unique
+            $table->id();
+            $table->integer('table_number')->unique();
             $table->string('status')->default('available');
             $table->timestamps();
         });
 
-        // Populate initial table numbers starting from 1
         $this->populateTableNumbers();
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down()
     {
         Schema::dropIfExists('tables');
     }
 
+    /**
+     * Populate the tables with initial data.
+     */
     protected function populateTableNumbers()
     {
-        // Assuming you want to create a certain number of tables
-        $numberOfTables = 10; // Change this number to how many tables you want to create initially
+        $numberOfTables = 10;
 
         for ($i = 1; $i <= $numberOfTables; $i++) {
-            \App\Models\Table::create(['table_number' => $i, 'status' => 'available']);
+            \App\Models\Table::create([
+                'table_number' => $i,
+                'status' => 'available',
+            ]);
         }
     }
 };

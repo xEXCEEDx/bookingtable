@@ -6,14 +6,53 @@ use Illuminate\Http\Request;
 use App\Models\Reservation;
 use App\Models\Table;
 use Illuminate\Support\Facades\Auth;
+use App\Models\TableStatus;
 
 class ReservationController extends Controller
 {
     public function index()
     {
-        $reservations = Reservation::with('table')->orderBy('created_at', 'desc')->get();
-        return view('reservations', compact('reservations'));
+        $reservation = Reservation::with('table', 'user')->where('user_id', Auth::id())->get();
+
+        $reservations = $reservations->groupBy(function ($reservation) {
+            return Carbon::parse($reservations->reservation_date)->format('Y-m-d');
+        });
+
+        return view('reservations', compact('groupedReservations'));
     }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'customer_name' => 'required|string|max:255',
+            'table_id' => 'required|exists:tables,id',
+        ]);
+
+        $tableId = $request->input('table_id');
+        $customerName = $request->input('customer_name');
+
+        // Example logic to update table status to reserved
+        $table = Table::find($tableId);
+
+        if (!$table) {
+            return back()->withErrors('Table not found.');
+        }
+
+        // Update table status to reserved
+        $todayStatus = TableStatus::updateOrCreate(
+            ['table_id' => $tableId, 'date' => now()->format('Y-m-d')],
+            ['status' => 'reserved']
+        );
+
+        // Create or update reservation entry
+        $reservation = Reservation::updateOrCreate(
+            ['table_id' => $tableId, 'reservation_date' => now()->format('Y-m-d'), 'user_id' => Auth::id()],
+            ['name' => $customerName, 'status' => 'reserved', 'staff_name' => Auth::user()->name] // Adjust staff_name as needed
+        );
+
+        return redirect()->route('reservations')->with('success', 'Table reserved successfully.');
+    }
+
 
     public function updateTable(Request $request, $reservationId)
     {
@@ -28,17 +67,36 @@ class ReservationController extends Controller
             return back()->withErrors('Reservation or table not found.');
         }
 
-        // Delete reservation
-        $reservation->delete();
+        // Get the table status
+        $tableStatus = TableStatus::where('table_id', $table->id)
+                                   ->where('date', $reservation->reservation_date)
+                                   ->first();
 
-        // Update table status to 'available'
-        if ($table) {
-            $table->status = 'available';
-            $table->save();
+        if ($tableStatus && $tableStatus->status == 'available') {
+            // Delete the reservation
+            $reservation->delete();
+
+            // Optionally, delete the table status entry if no longer needed
+            $tableStatus->delete();
+
+            return redirect()->route('reservations')->with('success', 'Reservation with available table status deleted successfully.');
+        } else {
+            // Get current user
+            $user = Auth::user();
+
+            // Update reservation status to 'cancelled'
+            $reservation->status = 'cancelled';
+            $reservation->staff_name = $user->name;
+            $reservation->save();
+
+            // Update table status to 'available'
+            $tableStatus->status = 'available';
+            $tableStatus->save();
+
+            return redirect()->route('reservations')->with('success', 'Reservation cancelled successfully.');
         }
-
-        return redirect()->route('reservations')->with('success', 'Reservation deleted successfully.');
     }
+
 
     public function clearAllReservations()
     {
@@ -53,6 +111,7 @@ class ReservationController extends Controller
             // Update table status to 'available'
             if ($table) {
                 $table->status = 'available';
+                $table->staff_name = null; // Reset staff_name for the table
                 $table->save();
             }
 
@@ -64,43 +123,31 @@ class ReservationController extends Controller
         return redirect()->route('reservations')->with('success', 'All reservations cleared successfully.');
     }
 
-    public function update(Request $request)
+    public function update(Request $request, $id)
     {
         $request->validate([
-            'username' => 'required',
-            'table_number' => 'required|integer|exists:tables,table_number',
+            'status' => 'required|in:available,reserved',
+            'date' => 'required|date',
         ]);
 
-        $tableNumber = $request->table_number;
         $status = $request->status;
+        $date = $request->date;
 
-        // Find the table by table_number
-        $table = Table::where('table_number', $tableNumber)->first();
+        // Find the reservation
+        $reservation = Reservation::findOrFail($id);
 
-        if (!$table) {
-            return back()->withErrors('Table not found.');
-        }
+        // Update reservation status
+        $reservation->status = $status;
+        $reservation->save();
 
         // Update table status
-        $table->status = $status;
-        $table->save();
-
-        // Get current user
-        $user = Auth::user();
-
-        // Find reservation by user_id and table_id with today's date
-        $reservation = Reservation::where('user_id', $user->id)
-            ->where('table_id', $table->id)
-            ->whereDate('reservation_time', Carbon::today())
-            ->first();
-
-        if ($reservation) {
-            // Update reservation status
-            $reservation->status = $status;
-            $reservation->save();
+        $table = $reservation->table;
+        if ($table) {
+            $table->status = $status;
+            $table->save();
         }
 
-        return redirect()->route('reservations')->with('success', 'Table status updated successfully.');
+        return redirect()->route('reservations')->with('success', 'Reservation status updated successfully.');
     }
 
     public function search(Request $request)
@@ -116,6 +163,7 @@ class ReservationController extends Controller
 
         return view('reservations', compact('reservations'));
     }
+
     public function userreservations()
     {
         $userId = Auth::id();
@@ -126,7 +174,7 @@ class ReservationController extends Controller
                                     ->orderBy('created_at', 'desc')
                                     ->get();
 
-        // Group reservations by reservation_time
+        // Group reservations by reservation_date
         $groupedReservations = $reservations->groupBy('reservation_date');
 
         return view('userreservations', compact('groupedReservations'));

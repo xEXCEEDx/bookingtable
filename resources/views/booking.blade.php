@@ -224,19 +224,19 @@
             <div class="alert alert-success">
                 {{ session('success') }}
             </div>
-        @endif
+            @endif
 
-        @if(session('warning'))
+            @if(session('warning'))
             <div class="alert alert-warning">
                 {{ session('warning') }}
             </div>
-        @endif
+            @endif
 
-        @if(session('error'))
+            @if(session('error'))
             <div class="alert alert-danger">
                 {{ session('error') }}
             </div>
-        @endif
+            @endif
             <a href="{{ route('userreservations') }}">
                 <img src="https://img.icons8.com/?size=100&id=68456&format=png&color=FFFFFF" class="imgnav" alt="">
             </a>
@@ -259,7 +259,10 @@
             </div>
             <div class="seat-box">
                 @foreach ($tables as $table)
-                    <div class="seat {{ $table->status }}" data-id="{{ $table->id }}">
+                    @php
+                        $statusToday = $table->statuses->where('date', $selectedDate)->first();
+                    @endphp
+                    <div class="seat {{ $statusToday ? $statusToday->status : 'available' }}" data-id="{{ $table->id }}">
                         <div class="seat-number">{{ $table->table_number }}</div>
                     </div>
                 @endforeach
@@ -276,7 +279,6 @@
             <form method="POST" action="{{ route('booking.confirm') }}" id="reservation-form">
                 @csrf
                 <input type="hidden" name="date" value="{{ $selectedDate }}">
-                <input type="hidden" name="reservation_time" id="reservation_time">
                 <div class="mb-3">
                     <select multiple class="hidden" id="tables" name="tables[]"></select>
                 </div>

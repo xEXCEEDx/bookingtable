@@ -4,7 +4,8 @@
 
     <div class="container mt-5">
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-3">
+
                 <h2>Set Total Tables</h2>
                 <form action="{{ route('tables.setTotal') }}" method="POST">
                     @csrf
@@ -16,7 +17,7 @@
                 </form>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-9">
                 <h2>Manage Restaurant Tables</h2>
                 @if (session('success'))
                     <div class="alert alert-success" role="alert" id="successAlert">
@@ -25,7 +26,7 @@
                     <script>
                         setTimeout(function() {
                             document.getElementById('successAlert').style.display = 'none';
-                        }, 5000); // 5000 milliseconds = 5 seconds
+                        }, 5000);
                     </script>
                 @endif
                 <div class="container mt-3">
@@ -41,23 +42,54 @@
                             @foreach ($tables as $table)
                                 <tr class="text-center">
                                     <td>{{ $table->table_number }}</td>
-                                    <td>{{ $table->status }}</td>
                                     <td>
-                                        @if ($table->status == 'available')
-                                            <form action="{{ route('tables.updateStatus', $table->id) }}" method="POST">
-                                                @csrf
-                                                @method('PATCH')
-                                                <input type="hidden" name="status" value="reserved">
-                                                <button type="submit" class="btn btn-primary btn-sm">Reserve</button>
-                                            </form>
-                                        @elseif ($table->status == 'reserved')
-                                            <form action="{{ route('tables.updateStatus', $table->id) }}" method="POST">
-                                                @csrf
-                                                @method('PATCH')
-                                                <input type="hidden" name="status" value="available">
-                                                <button type="submit" class="btn btn-danger btn-sm">Available</button>
-                                            </form>
-                                        @endif
+                                        <!-- Display statuses -->
+                                        @php
+                                            $statusToday = $table->statuses->where('date', now()->format('Y-m-d'))->first();
+                                            $statusTomorrow = $table->statuses->where('date', now()->addDay()->format('Y-m-d'))->first();
+                                            $statusAfterTomorrow = $table->statuses->where('date', now()->addDays(2)->format('Y-m-d'))->first();
+                                        @endphp
+                                        Today: {{ $statusToday ? $statusToday->status : 'available' }}<br>
+                                        Tomorrow: {{ $statusTomorrow ? $statusTomorrow->status : 'available' }}<br>
+                                        After Tomorrow: {{ $statusAfterTomorrow ? $statusAfterTomorrow->status : 'available' }}
+                                    </td>
+                                    <td>
+                                        <form action="{{ route('tables.updateStatus', $table->id) }}" method="POST">
+                                            @csrf
+                                            @method('PATCH')
+                                            <div class="input-group mb-3">
+                                                <select class="form-select" name="status">
+                                                    <option value="available">Available</option>
+                                                    <option value="reserved">Reserved</option>
+                                                </select>
+                                                <input type="hidden" name="date" value="{{ now()->format('Y-m-d') }}" />
+                                                <button class="btn btn-primary" type="submit">Update Today</button>
+                                            </div>
+                                        </form>
+                                        <form action="{{ route('tables.updateStatus', $table->id) }}" method="POST">
+                                            @csrf
+                                            @method('PATCH')
+                                            <div class="input-group mb-3">
+                                                <select class="form-select" name="status">
+                                                    <option value="available">Available</option>
+                                                    <option value="reserved">Reserved</option>
+                                                </select>
+                                                <input type="hidden" name="date" value="{{ now()->addDay()->format('Y-m-d') }}" />
+                                                <button class="btn btn-primary" type="submit">Update Tomorrow</button>
+                                            </div>
+                                        </form>
+                                        <form action="{{ route('tables.updateStatus', $table->id) }}" method="POST">
+                                            @csrf
+                                            @method('PATCH')
+                                            <div class="input-group mb-3">
+                                                <select class="form-select" name="status">
+                                                    <option value="available">Available</option>
+                                                    <option value="reserved">Reserved</option>
+                                                </select>
+                                                <input type="hidden" name="date" value="{{ now()->addDays(2)->format('Y-m-d') }}" />
+                                                <button class="btn btn-primary" type="submit">Update After Tomorrow</button>
+                                            </div>
+                                        </form>
                                     </td>
                                 </tr>
                             @endforeach
