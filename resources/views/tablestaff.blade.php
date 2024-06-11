@@ -5,7 +5,6 @@
     <div class="container mt-5">
         <div class="row">
             <div class="col-md-3">
-
                 <h2>Set Total Tables</h2>
                 <form action="{{ route('tables.setTotal') }}" method="POST">
                     @csrf
@@ -13,10 +12,11 @@
                         <label for="total_tables" class="form-label">Total Tables</label>
                         <input type="number" class="form-control" id="total_tables" name="total_tables" value="{{ $tables->count() }}" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Update Total Tables</button>
+                    <div>
+                    <button type="submit" class="btn btn-primary mb-5">Update Total Tables</button>
                 </form>
             </div>
-
+</div>
             <div class="col-md-9">
                 <h2>Manage Restaurant Tables</h2>
                 @if (session('success'))
@@ -30,12 +30,13 @@
                     </script>
                 @endif
                 <div class="container mt-3">
-                    <table class="table">
+                    <table class="table table-bordered">
                         <thead class="text-center">
                             <tr>
                                 <th scope="col">Table Number</th>
-                                <th scope="col">Status</th>
-                                <th scope="col">Actions</th>
+                                <th scope="col">Today ({{ now()->format('Y-m-d') }})</th>
+                                <th scope="col">Tomorrow ({{ now()->addDay()->format('Y-m-d') }})</th>
+                                <th scope="col">Day After Tomorrow ({{ now()->addDays(2)->format('Y-m-d') }})</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -43,52 +44,45 @@
                                 <tr class="text-center">
                                     <td>{{ $table->table_number }}</td>
                                     <td>
-                                        <!-- Display statuses -->
                                         @php
                                             $statusToday = $table->statuses->where('date', now()->format('Y-m-d'))->first();
-                                            $statusTomorrow = $table->statuses->where('date', now()->addDay()->format('Y-m-d'))->first();
-                                            $statusAfterTomorrow = $table->statuses->where('date', now()->addDays(2)->format('Y-m-d'))->first();
                                         @endphp
-                                        Today: {{ $statusToday ? $statusToday->status : 'available' }}<br>
-                                        Tomorrow: {{ $statusTomorrow ? $statusTomorrow->status : 'available' }}<br>
-                                        After Tomorrow: {{ $statusAfterTomorrow ? $statusAfterTomorrow->status : 'available' }}
+                                        <form action="{{ route('tables.updateStatus', $table->id) }}" method="POST">
+                                            @csrf
+                                            @method('PATCH')
+                                            <input type="hidden" name="date" value="{{ now()->format('Y-m-d') }}" />
+                                            <input type="hidden" name="status" value="{{ $statusToday && $statusToday->status == 'reserved' ? 'available' : 'reserved' }}" />
+                                            <button class="btn btn-{{ $statusToday && $statusToday->status == 'reserved' ? 'danger' : 'primary' }}" type="submit">
+                                                {{ $statusToday && $statusToday->status == 'reserved' ? 'Cancel' : 'Reserve' }}
+                                            </button>
+                                        </form>
                                     </td>
                                     <td>
+                                        @php
+                                            $statusTomorrow = $table->statuses->where('date', now()->addDay()->format('Y-m-d'))->first();
+                                        @endphp
                                         <form action="{{ route('tables.updateStatus', $table->id) }}" method="POST">
                                             @csrf
                                             @method('PATCH')
-                                            <div class="input-group mb-3">
-                                                <select class="form-select" name="status">
-                                                    <option value="available">Available</option>
-                                                    <option value="reserved">Reserved</option>
-                                                </select>
-                                                <input type="hidden" name="date" value="{{ now()->format('Y-m-d') }}" />
-                                                <button class="btn btn-primary" type="submit">Update Today</button>
-                                            </div>
+                                            <input type="hidden" name="date" value="{{ now()->addDay()->format('Y-m-d') }}" />
+                                            <input type="hidden" name="status" value="{{ $statusTomorrow && $statusTomorrow->status == 'reserved' ? 'available' : 'reserved' }}" />
+                                            <button class="btn btn-{{ $statusTomorrow && $statusTomorrow->status == 'reserved' ? 'danger' : 'primary' }}" type="submit">
+                                                {{ $statusTomorrow && $statusTomorrow->status == 'reserved' ? 'Cancel' : 'Reserve' }}
+                                            </button>
                                         </form>
+                                    </td>
+                                    <td>
+                                        @php
+                                            $statusAfterTomorrow = $table->statuses->where('date', now()->addDays(2)->format('Y-m-d'))->first();
+                                        @endphp
                                         <form action="{{ route('tables.updateStatus', $table->id) }}" method="POST">
                                             @csrf
                                             @method('PATCH')
-                                            <div class="input-group mb-3">
-                                                <select class="form-select" name="status">
-                                                    <option value="available">Available</option>
-                                                    <option value="reserved">Reserved</option>
-                                                </select>
-                                                <input type="hidden" name="date" value="{{ now()->addDay()->format('Y-m-d') }}" />
-                                                <button class="btn btn-primary" type="submit">Update Tomorrow</button>
-                                            </div>
-                                        </form>
-                                        <form action="{{ route('tables.updateStatus', $table->id) }}" method="POST">
-                                            @csrf
-                                            @method('PATCH')
-                                            <div class="input-group mb-3">
-                                                <select class="form-select" name="status">
-                                                    <option value="available">Available</option>
-                                                    <option value="reserved">Reserved</option>
-                                                </select>
-                                                <input type="hidden" name="date" value="{{ now()->addDays(2)->format('Y-m-d') }}" />
-                                                <button class="btn btn-primary" type="submit">Update After Tomorrow</button>
-                                            </div>
+                                            <input type="hidden" name="date" value="{{ now()->addDays(2)->format('Y-m-d') }}" />
+                                            <input type="hidden" name="status" value="{{ $statusAfterTomorrow && $statusAfterTomorrow->status == 'reserved' ? 'available' : 'reserved' }}" />
+                                            <button class="btn btn-{{ $statusAfterTomorrow && $statusAfterTomorrow->status == 'reserved' ? 'danger' : 'primary' }}" type="submit">
+                                                {{ $statusAfterTomorrow && $statusAfterTomorrow->status == 'reserved' ? 'Cancel' : 'Reserve' }}
+                                            </button>
                                         </form>
                                     </td>
                                 </tr>

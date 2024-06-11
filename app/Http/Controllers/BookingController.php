@@ -8,19 +8,21 @@ use App\Models\Reservation;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use App\Models\TableStatus;
+use App\Models\Image;
 
 class BookingController extends Controller
 {
     public function index(Request $request)
     {
         $selectedDate = $request->input('date', Carbon::today()->format('Y-m-d'));
-        $tables = Table::with(['statuses' => function ($query) use ($selectedDate) {
-            $query->where('date', $selectedDate);
-        }])->get();
+    $tables = Table::with(['statuses' => function ($query) use ($selectedDate) {
+        $query->where('date', $selectedDate);
+    }])->get();
 
-        return view('booking', compact('tables', 'selectedDate'));
-    }
+    $image = Image::latest()->first(); // เลือกภาพล่าสุดที่อัพโหลด
 
+    return view('booking', compact('tables', 'selectedDate', 'image'));
+}
     public function confirm(Request $request)
     {
         $request->validate([
@@ -32,6 +34,15 @@ class BookingController extends Controller
         $tables = $request->input('tables');
         $reservationDate = Carbon::parse($request->input('date'));
 
+        // Check if user has already made a reservation for the selected date
+        $existingReservations = Reservation::where('user_id', Auth::id())
+                                           ->whereDate('reservation_date', $reservationDate)
+                                           ->get();
+
+        if ($existingReservations->isNotEmpty()) {
+            return back()->with('error', 'คุณได้จองโต๊ะสำหรับวันนี้ไปแล้ว.');
+        }
+
         foreach ($tables as $tableId) {
             $table = Table::find($tableId);
 
@@ -42,16 +53,15 @@ class BookingController extends Controller
                 );
 
                 // Create or update reservation
-                $reservation = Reservation::updateOrCreate(
+                Reservation::updateOrCreate(
                     ['table_id' => $table->id, 'reservation_date' => $reservationDate, 'user_id' => Auth::id()],
-                    ['name' => Auth::user()->name, 'status' => 'reserved', 'staff_name' => Auth::user()->name] // เพิ่มข้อมูล staff_name ที่ทำการจอง
+                    ['name' => Auth::user()->name, 'status' => 'reserved', 'staff_name' => Auth::user()->name]
                 );
             }
         }
 
         return redirect()->route('userreservations')->with('success', 'Tables reserved successfully!');
     }
-
 
     public function showDates()
     {   $tables = Table::all();
@@ -125,7 +135,7 @@ class BookingController extends Controller
             $reservation->user_id = Auth::id();
             $reservation->name = Auth::user()->name;
             $reservation->reservation_date = Carbon::now()->toDateString();
-            $reservation->reservation_time = Carbon::now()->toTimeString();
+
         }
 
         $reservation->status = $status;

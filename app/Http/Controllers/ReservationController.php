@@ -7,15 +7,16 @@ use App\Models\Reservation;
 use App\Models\Table;
 use Illuminate\Support\Facades\Auth;
 use App\Models\TableStatus;
+use Carbon\Carbon;
 
 class ReservationController extends Controller
 {
     public function index()
     {
-        $reservation = Reservation::with('table', 'user')->where('user_id', Auth::id())->get();
+        $reservations = Reservation::with('table')->where('user_id', Auth::id())->get();
 
-        $reservations = $reservations->groupBy(function ($reservation) {
-            return Carbon::parse($reservations->reservation_date)->format('Y-m-d');
+        $groupedReservations = $reservations->groupBy(function ($reservation) {
+            return Carbon::parse($reservation->reservation_date)->format('Y-m-d');
         });
 
         return view('reservations', compact('groupedReservations'));
@@ -62,38 +63,23 @@ class ReservationController extends Controller
         // Get associated table
         $table = $reservation->table;
 
-        // Check if reservation and table exist
         if (!$reservation || !$table) {
             return back()->withErrors('Reservation or table not found.');
         }
 
-        // Get the table status
+
         $tableStatus = TableStatus::where('table_id', $table->id)
                                    ->where('date', $reservation->reservation_date)
                                    ->first();
 
-        if ($tableStatus && $tableStatus->status == 'available') {
-            // Delete the reservation
+        if ($tableStatus && $tableStatus->status == 'reserved') {
+
             $reservation->delete();
 
-            // Optionally, delete the table status entry if no longer needed
+
             $tableStatus->delete();
 
             return redirect()->route('reservations')->with('success', 'Reservation with available table status deleted successfully.');
-        } else {
-            // Get current user
-            $user = Auth::user();
-
-            // Update reservation status to 'cancelled'
-            $reservation->status = 'cancelled';
-            $reservation->staff_name = $user->name;
-            $reservation->save();
-
-            // Update table status to 'available'
-            $tableStatus->status = 'available';
-            $tableStatus->save();
-
-            return redirect()->route('reservations')->with('success', 'Reservation cancelled successfully.');
         }
     }
 
@@ -110,8 +96,16 @@ class ReservationController extends Controller
 
             // Update table status to 'available'
             if ($table) {
-                $table->status = 'available';
-                $table->staff_name = null; // Reset staff_name for the table
+                $tableStatus = TableStatus::where('table_id', $table->id)
+                                          ->where('date', $reservation->reservation_date)
+                                          ->first();
+                if ($tableStatus) {
+                    $tableStatus->status = 'available';
+                    $tableStatus->save();
+                }
+
+                // Optionally, reset staff_name for the table
+                $table->staff_name = null;
                 $table->save();
             }
 
@@ -126,25 +120,26 @@ class ReservationController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:available,reserved',
-            'date' => 'required|date',
+            'status' => 'required|in:available,reserved,cancelled',
         ]);
-
-        $status = $request->status;
-        $date = $request->date;
 
         // Find the reservation
         $reservation = Reservation::findOrFail($id);
 
         // Update reservation status
-        $reservation->status = $status;
+        $reservation->status = $request->status;
         $reservation->save();
 
-        // Update table status
-        $table = $reservation->table;
-        if ($table) {
-            $table->status = $status;
-            $table->save();
+        // Update table status if needed
+        if ($request->status == 'cancelled') {
+            $tableStatus = TableStatus::where('table_id', $reservation->table_id)
+                                      ->where('date', $reservation->reservation_date)
+                                      ->first();
+
+            if ($tableStatus) {
+                $tableStatus->status = 'available';
+                $tableStatus->save();
+            }
         }
 
         return redirect()->route('reservations')->with('success', 'Reservation status updated successfully.');

@@ -66,7 +66,7 @@
                             <tr>
                                 <td>{{ $reservation->table->table_number }}</td>
                                 <td>{{ $reservation->name }}</td>
-                                <td>{{ $reservation->reservation_time }}</td>
+                                <td>{{ $reservation->created_at}}</td>
                                 <td>{{ \Carbon\Carbon::parse($reservation->reservation_date)->format('d M Y') }}</td>
                                 <td>
                                     @php

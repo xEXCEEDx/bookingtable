@@ -108,12 +108,13 @@
                 <x-responsive-nav-link :href="route('tables.index')" class="no-underline">
                     {{ __('Admin') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('reservations')" class="no-underline">
+                <x-responsive-nav-link
+                 :href="route('reservations')" class="no-underline">
                     {{ __('Reservations') }}
                 </x-responsive-nav-link>
-                <x-dropdown-link :href="route('booking_dates')" class="no-underline">
+                <x-responsive-nav-link :href="route('booking_dates')" class="no-underline">
                     {{ __('Datebooking') }}
-                </x-dropdown-link>
+                </x-responsive-nav-link>
 
                 <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">

@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\TableController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\ImageController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -24,7 +25,7 @@ Route::middleware('auth')->group(function () {
 Route::get('/tables', [TableController::class, 'index'])->name('tables.index');
 Route::post('/tables', [TableController::class, 'store'])->name('tables.store');
 Route::delete('/tables/{table}', [TableController::class, 'destroy'])->name('tables.destroy');
-Route::post('/tables/set-total', [TableController::class, 'setTotalTables'])->name('tables.setTotal');
+Route::post('/tables/set-total', [TableController::class, 'setTotal'])->name('tables.setTotal');
 
 
 Route::patch('/tables/{table}/update-status', [TableController::class, 'updateStatus'])->name('tables.updateStatus');
@@ -50,7 +51,8 @@ Route::post('/tables/reserve', [TableController::class, 'reserveTable'])->name('
 
 Route::get('/tables/manage/{date?}', [TableController::class, 'manageTables'])->name('tables.manage');
 
-
+Route::get('/upload', [ImageController::class, 'showUploadForm'])->name('upload.form');
+Route::post('/upload', [ImageController::class, 'uploadImage'])->name('upload.image');
 });
 
 

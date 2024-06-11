@@ -17,7 +17,6 @@ return new class extends Migration
             $table->foreignId('table_id')->constrained('tables')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('name'); // Assuming 'name' is the user's name
-            $table->timestamp('reservation_time')->default(now());
             $table->date('reservation_date'); // Add this line
             $table->string('staff_name')->nullable();
             $table->string('status');

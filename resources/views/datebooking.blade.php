@@ -221,7 +221,7 @@
             const dayAfterTomorrow = new Date(today);
 
             tomorrow.setDate(today.getDate() + 1);
-            dayAfterTomorrow.setDate(today.getDate() + 1);
+            dayAfterTomorrow.setDate(today.getDate() + 2);
 
             const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
             const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1);

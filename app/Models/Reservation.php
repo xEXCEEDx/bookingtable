@@ -13,7 +13,6 @@ class Reservation extends Model
         'table_id',
         'user_id',
         'name',
-        'reservation_time',
         'reservation_date',
         'status',
     ];

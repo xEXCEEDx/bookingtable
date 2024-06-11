@@ -15,6 +15,10 @@
         margin: 0;
         padding: 0;
     }
+    .alert {
+            --bs-alert-margin-bottom: 0;
+
+    }
 
     body {
         font-family: "Rubik", sans-serif;
@@ -22,7 +26,7 @@
         align-items: center;
         justify-content: center;
         background: #2f2f2f;
-        padding: 10px;
+
     }
 
     .booking-container {
@@ -46,7 +50,8 @@
         /* Items evenly spaced */
         align-items: center;
         /* Center align items vertically */
-        border-bottom: 1px solid #232323; /* Add this line */
+        border-bottom: 1px solid #232323;
+        /* Add this line */
     }
 
     .nav-link {
@@ -140,16 +145,34 @@
     }
 
     .booking-details {
-        display: none;
-        padding: 20px;
+        margin-top: 10px;
+        padding: 15px;
         background: #242424;
         display: flex;
         flex-direction: column;
         gap: 10px;
         color: white;
+        justify-content: center;
+        visibility: hidden;
+        /* Initially hidden */
+        max-height: 0;
+        /* Initially height 0 */
+        overflow: hidden;
+        /* Hide overflow when hidden */
+        transition: visibility 0s, max-height 0.3s ease-out;
+        /* Smooth transition */
     }
 
+    .booking-details.visible {
+        visibility: visible;
+        /* Make it visible */
+        max-height: 200px;
+        /* Adjust this value as needed for your content */
+    }
+
+
     .details-row {
+        top: 10px;
         display: flex;
         justify-content: space-between;
     }
@@ -220,31 +243,33 @@
     <div class="booking-container">
         <nav>
             <a class="nav-link" href="{{ route('booking_dates') }}"><i class="fas fa-chevron-left"></i></a>
-            @if(session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
+            @if (session('success'))
+                <div class="alert alert-success">
+                    {{ session('success') }}
+                </div>
             @endif
 
-            @if(session('warning'))
-            <div class="alert alert-warning">
-                {{ session('warning') }}
-            </div>
+            @if (session('warning'))
+                <div class="alert alert-warning">
+                    {{ session('warning') }}
+                </div>
             @endif
 
-            @if(session('error'))
-            <div class="alert alert-danger">
-                {{ session('error') }}
-            </div>
+            @if (session('error'))
+                <div class="alert alert-danger">
+                    {{ session('error') }}
+                </div>
             @endif
             <a href="{{ route('userreservations') }}">
-                <img src="https://img.icons8.com/?size=100&id=68456&format=png&color=FFFFFF" class="imgnav" alt="">
+                <img src="https://img.icons8.com/?size=100&id=68456&format=png&color=FFFFFF" class="imgnav"
+                    alt="">
             </a>
         </nav>
 
         <div>
-            <img src="https://uppic.cloud/ib/iqbCuu6eGJ.png" alt="Image">
+            <img src="{{ asset('images/' . $image->imgbooking) }}" alt="Image">
         </div>
+
         <div class="seat-details">
             <div class="seat-legends">
                 <div class="seat-legend">
@@ -262,7 +287,8 @@
                     @php
                         $statusToday = $table->statuses->where('date', $selectedDate)->first();
                     @endphp
-                    <div class="seat {{ $statusToday ? $statusToday->status : 'available' }}" data-id="{{ $table->id }}">
+                    <div class="seat {{ $statusToday ? $statusToday->status : 'available' }}"
+                        data-id="{{ $table->id }}">
                         <div class="seat-number">{{ $table->table_number }}</div>
                     </div>
                 @endforeach
@@ -322,7 +348,11 @@
             tickets.textContent = selectedSeats.size > 0 ? [...selectedSeats].join(", ") : "-";
             price.textContent = `฿${selectedSeats.size * seatPrice}`;
 
-            bookingDetails.style.display = selectedSeats.size > 0 ? 'flex' : 'none';
+            if (selectedSeats.size > 0) {
+                bookingDetails.classList.add('visible');
+            } else {
+                bookingDetails.classList.remove('visible');
+            }
 
             // Clear current select options
             reservationTablesSelect.innerHTML = '';
@@ -336,6 +366,7 @@
                 reservationTablesSelect.appendChild(option);
             });
         }
+
         seatBox.addEventListener('click', toggleSeat);
         reservationForm.addEventListener('submit', function(event) {
             event.preventDefault();
@@ -346,4 +377,5 @@
         updateDetails(); // Initial update on page load
     </script>
 </body>
+
 </html>

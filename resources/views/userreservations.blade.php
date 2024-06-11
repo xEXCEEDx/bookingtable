@@ -34,7 +34,7 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            height: 43rem;
+            height: 97vh;
             box-shadow: 0 0 10px 2px #212121;
             background: #2f2f2f;
         }

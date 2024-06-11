@@ -7,7 +7,8 @@ use App\Models\Table;
 use App\Models\TableStatus;
 use Carbon\Carbon;
 use App\Models\Reservation;
-use App\Http\Controllers\Auth;
+use Illuminate\Support\Facades\Auth;
+
 
 class TableController extends Controller
 {
